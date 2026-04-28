@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import argparse
 from pathlib import Path
 import sys
 
@@ -13,8 +14,6 @@ DEFAULT_QUESTIONS = [
 
 def _print_step(title: str) -> None:
     print(f"\n=== {title} ===")
-
-
 
 
 def _apply_temp_event_fallbacks(temp_events, chunks) -> None:
@@ -32,9 +31,12 @@ def _apply_temp_event_fallbacks(temp_events, chunks) -> None:
             if "meridian port" in lowered:
                 event.location = "Meridian Port"
 
+
 def run_mvp_sample_pipeline(
     root: Path | None = None,
     questions: list[str] | None = None,
+    llm_provider: str = "mock",
+    skip_extraction: bool = False,
 ) -> dict[str, object]:
     if root is None:
         root = Path(__file__).resolve().parents[1]
@@ -56,9 +58,11 @@ def run_mvp_sample_pipeline(
         load_chunks,
         load_claims,
         load_events,
+        load_temp_claims,
+        load_temp_events,
         write_jsonl,
     )
-    from claim_aware_event_graphrag.llm import MockLLMClient
+    from claim_aware_event_graphrag.llm import get_llm_client
     from claim_aware_event_graphrag.retrieval import format_retrieval_result, retrieve_context
     from claim_aware_event_graphrag.validation import (
         validate_conflicts,
@@ -74,6 +78,8 @@ def run_mvp_sample_pipeline(
     chunks_path = sample_dir / "chunks.jsonl"
     sample_events_path = sample_dir / "events.jsonl"
     sample_claims_path = sample_dir / "claims.jsonl"
+    temp_events_path = processed_dir / "temp_events.jsonl"
+    temp_claims_path = processed_dir / "temp_claims.jsonl"
 
     _print_step("Step 1 - Validate sample data")
     chunks = load_chunks(chunks_path)
@@ -91,15 +97,23 @@ def run_mvp_sample_pipeline(
     print("validation: PASSED")
 
     _print_step("Step 2 - Extract temp events/claims")
-    llm_client = MockLLMClient()
-    temp_events, temp_claims = extract_from_chunks(chunks, llm_client)
-    _apply_temp_event_fallbacks(temp_events, chunks)
-    temp_errors = validate_temp_extraction(chunks, temp_events, temp_claims)
+    if skip_extraction:
+        if not temp_events_path.exists() or not temp_claims_path.exists():
+            raise RuntimeError(
+                "Step 2 failed: --skip-extraction was set but temp_events.jsonl or temp_claims.jsonl is missing"
+            )
+        temp_events = load_temp_events(temp_events_path)
+        temp_claims = load_temp_claims(temp_claims_path)
+        print("extraction: SKIPPED (using existing temp files)")
+    else:
+        llm_client = get_llm_client(llm_provider)
+        temp_events, temp_claims = extract_from_chunks(chunks, llm_client)
+        _apply_temp_event_fallbacks(temp_events, chunks)
+        write_jsonl(temp_events_path, [event.model_dump(mode="json") for event in temp_events])
+        write_jsonl(temp_claims_path, [claim.model_dump(mode="json") for claim in temp_claims])
+        print(f"llm_provider: {llm_provider}")
 
-    temp_events_path = processed_dir / "temp_events.jsonl"
-    temp_claims_path = processed_dir / "temp_claims.jsonl"
-    write_jsonl(temp_events_path, [event.model_dump(mode="json") for event in temp_events])
-    write_jsonl(temp_claims_path, [claim.model_dump(mode="json") for claim in temp_claims])
+    temp_errors = validate_temp_extraction(chunks, temp_events, temp_claims)
 
     print(f"temp_events: {len(temp_events)}")
     print(f"temp_claims: {len(temp_claims)}")
@@ -218,8 +232,13 @@ def run_mvp_sample_pipeline(
 
 
 def main() -> int:
+    parser = argparse.ArgumentParser(description="Run full MVP sample pipeline")
+    parser.add_argument("--llm", default="mock", choices=["mock", "deepseek"], help="LLM provider for extraction")
+    parser.add_argument("--skip-extraction", action="store_true", help="Skip extraction and reuse existing temp files")
+    args = parser.parse_args()
+
     try:
-        run_mvp_sample_pipeline()
+        run_mvp_sample_pipeline(llm_provider=args.llm, skip_extraction=args.skip_extraction)
     except Exception as exc:
         print(f"ERROR: {exc}")
         return 1

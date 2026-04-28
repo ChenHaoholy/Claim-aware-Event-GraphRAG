@@ -67,13 +67,21 @@ python scripts/answer_sample.py "What happened near Isfahan?"
 
 ## Run the full MVP sample pipeline
 ```bash
+# 1) 默认 mock（保持原行为）
 python scripts/run_mvp_sample.py
+
+# 2) 使用 DeepSeek 重新抽取后继续后续 pipeline
+python scripts/run_mvp_sample.py --llm deepseek
+
+# 3) 跳过抽取，复用已有 temp_events/temp_claims
+python scripts/run_mvp_sample.py --skip-extraction
 ```
 
 说明：
+- 默认会重新抽取并覆盖 `data/processed/temp_events.jsonl` 与 `data/processed/temp_claims.jsonl`。
+- `--skip-extraction` 会直接复用现有 temp 文件，不重新抽取；若文件缺失会报错。
 - 该脚本会覆盖 `data/processed` 和 `data/graph` 下的 sample 输出。
-- 全流程只使用 MockLLM / rule-based modules。
-- 不调用真实 LLM。
+- 全流程默认使用 MockLLM / rule-based modules。
 - 不需要 Neo4j。
 - 不需要向量数据库。
 
