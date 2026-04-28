@@ -32,6 +32,17 @@ ClaimTopic = Literal[
 ClaimStance = Literal["assert", "deny", "uncertain", "report"]
 ConflictSeverity = Literal["low", "medium", "high", "none"]
 
+GraphNodeType = Literal["event", "claim", "chunk", "actor", "location", "conflict"]
+GraphEdgeType = Literal[
+    "ABOUT",
+    "SUPPORTED_BY",
+    "MADE_BY",
+    "INVOLVES_ACTOR",
+    "OCCURRED_AT",
+    "HAS_CONFLICT",
+    "CONFLICTS_WITH",
+]
+
 
 class Chunk(BaseModel):
     model_config = ConfigDict(str_strip_whitespace=True)
@@ -207,3 +218,37 @@ class Conflict(BaseModel):
         if self.is_conflict and self.severity == "none":
             raise ValueError("severity must not be 'none' when is_conflict is true")
         return self
+
+
+
+class GraphNode(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    node_id: str
+    node_type: GraphNodeType
+    label: str
+    properties: dict[str, object]
+
+    @field_validator("node_id", "label")
+    @classmethod
+    def must_be_non_empty(cls, value: str) -> str:
+        if value == "":
+            raise ValueError("must not be empty")
+        return value
+
+
+class GraphEdge(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    edge_id: str
+    source_id: str
+    target_id: str
+    edge_type: GraphEdgeType
+    properties: dict[str, object]
+
+    @field_validator("edge_id", "source_id", "target_id")
+    @classmethod
+    def must_be_non_empty(cls, value: str) -> str:
+        if value == "":
+            raise ValueError("must not be empty")
+        return value

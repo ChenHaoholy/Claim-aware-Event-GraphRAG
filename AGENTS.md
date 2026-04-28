@@ -17,7 +17,10 @@
   - `Claim`
   - `TempEvent`
   - `TempClaim`
-- `Conflict`, `Graph`, and other advanced objects will be added in later stages.
+  - `Conflict`
+  - `GraphNode`
+  - `GraphEdge`
+- Keep graph construction file-based (JSONL), deterministic, and easy to inspect.
 
 ## Do NOT add unless explicitly requested
 - Real LLM API integration

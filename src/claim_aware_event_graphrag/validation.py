@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from .schemas import Chunk, Claim, Conflict, Event, TempClaim, TempEvent
+from .schemas import Chunk, Claim, Conflict, Event, GraphEdge, GraphNode, TempClaim, TempEvent
 
 
 def validate_dataset(
@@ -166,5 +166,56 @@ def validate_conflicts(
             )
         if conflict.explanation.strip() == "":
             errors.append(f"Conflict {conflict.conflict_id} has empty explanation")
+
+    return errors
+
+
+
+def validate_graph(nodes: list[GraphNode], edges: list[GraphEdge]) -> list[str]:
+    errors: list[str] = []
+
+    valid_node_types = {"event", "claim", "chunk", "actor", "location", "conflict"}
+    valid_edge_types = {
+        "ABOUT",
+        "SUPPORTED_BY",
+        "MADE_BY",
+        "INVOLVES_ACTOR",
+        "OCCURRED_AT",
+        "HAS_CONFLICT",
+        "CONFLICTS_WITH",
+    }
+
+    seen_node_ids: set[str] = set()
+    for node in nodes:
+        if node.node_id in seen_node_ids:
+            errors.append(f"Duplicate node_id: {node.node_id}")
+        seen_node_ids.add(node.node_id)
+
+        if node.node_type not in valid_node_types:
+            errors.append(f"Node {node.node_id} has invalid node_type {node.node_type}")
+        if node.label.strip() == "":
+            errors.append(f"Node {node.node_id} has empty label")
+
+    seen_edge_ids: set[str] = set()
+    for edge in edges:
+        if edge.edge_id in seen_edge_ids:
+            errors.append(f"Duplicate edge_id: {edge.edge_id}")
+        seen_edge_ids.add(edge.edge_id)
+
+        if edge.edge_type not in valid_edge_types:
+            errors.append(f"Edge {edge.edge_id} has invalid edge_type {edge.edge_type}")
+        if edge.source_id.strip() == "":
+            errors.append(f"Edge {edge.edge_id} has empty source_id")
+        if edge.target_id.strip() == "":
+            errors.append(f"Edge {edge.edge_id} has empty target_id")
+
+        if edge.source_id not in seen_node_ids:
+            errors.append(
+                f"Edge {edge.edge_id} references missing source_id {edge.source_id}"
+            )
+        if edge.target_id not in seen_node_ids:
+            errors.append(
+                f"Edge {edge.edge_id} references missing target_id {edge.target_id}"
+            )
 
     return errors

@@ -7,7 +7,8 @@
 - **Step 1**：schema + sample data + validation
 - **Step 2**：Chunk 级 Event + Claim 抽取（temp_events / temp_claims）
 - **Step 3**：Event Merge and Claim Canonicalization
-- **Step 4（当前新增）**：Claim Conflict Detection
+- **Step 4**：Claim Conflict Detection
+- **Step 5（当前新增）**：Graph Construction
 
 当前实现聚焦在可验证的中间层：
 - 数据 schema（Pydantic）
@@ -28,6 +29,12 @@
 - 当前不使用真实 LLM
 - 当前输出所有候选结果（包括 `is_conflict=false`）方便 debug
 - 后续可以替换为 LLM judge
+
+## Step 5: Graph Construction
+- 输入：`chunks/events/claims/conflicts`
+- 输出：`data/graph/nodes.jsonl` 与 `data/graph/edges.jsonl`
+- 规则：构建 event/claim/chunk/actor/location/conflict 节点及关系边
+- 当前仅文件化图结构，不接 Neo4j，不做检索与问答
 
 ## 核心对象
 - **Event**：发生了什么（canonical）
@@ -56,6 +63,7 @@ python scripts/extract_sample.py
 python scripts/merge_sample.py
 python scripts/validate_processed.py
 python scripts/detect_conflicts_sample.py
+python scripts/build_graph_sample.py
 pytest
 ```
 
@@ -69,3 +77,7 @@ pytest
   - `data/processed/temp_event_mapping.jsonl`
 - Step 4:
   - `data/processed/conflicts.jsonl`
+
+- Step 5:
+  - `data/graph/nodes.jsonl`
+  - `data/graph/edges.jsonl`

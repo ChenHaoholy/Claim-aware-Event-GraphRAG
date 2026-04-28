@@ -19,7 +19,7 @@ The design emphasizes stable intermediate outputs and verification at every step
 - **Step 6**: retrieval
 - **Step 7**: answer generation
 
-Current repository work is centered on Steps 1–3 foundations.
+Current repository work is centered on Steps 1–5 foundations.
 
 ---
 
@@ -96,6 +96,34 @@ Fields:
 Purpose:
 - Container for one chunk extraction output.
 
+### Conflict
+Fields:
+- `conflict_id: str`
+- `event_id: str`
+- `claim_ids: list[str]`
+- `topic: Claim.topic literal`
+- `is_conflict: bool`
+- `severity: Literal[low, medium, high, none]`
+- `explanation: str`
+
+Purpose:
+- Rule-based contradiction assessment result for one claim group.
+
+### GraphNode
+Fields:
+- `node_id: str`
+- `node_type: Literal[event, claim, chunk, actor, location, conflict]`
+- `label: str`
+- `properties: dict[str, Any]`
+
+### GraphEdge
+Fields:
+- `edge_id: str`
+- `source_id: str`
+- `target_id: str`
+- `edge_type: Literal[ABOUT, SUPPORTED_BY, MADE_BY, INVOLVES_ACTOR, OCCURRED_AT, HAS_CONFLICT, CONFLICTS_WITH]`
+- `properties: dict[str, Any]`
+
 ---
 
 ## 4) JSONL Files
@@ -111,19 +139,52 @@ Purpose:
 - `data/processed/events.jsonl`
 - `data/processed/claims.jsonl`
 - `data/processed/temp_event_mapping.jsonl`
+- `data/processed/conflicts.jsonl`
+
+### Graph data
+- `data/graph/nodes.jsonl`
+- `data/graph/edges.jsonl`
 
 ---
 
-## 5) Validation Principles
+## 5) Graph Construction Rules (Step 5)
+Node creation:
+- Event -> event node
+- Claim -> claim node
+- Chunk -> chunk node
+- actor strings -> actor node (normalized)
+- non-empty location -> location node (normalized)
+- Conflict -> conflict node
+
+Edge creation:
+- Claim `ABOUT` Event
+- Claim `SUPPORTED_BY` Chunk
+- Claim `MADE_BY` Actor
+- Event `INVOLVES_ACTOR` Actor
+- Event `OCCURRED_AT` Location
+- Event `HAS_CONFLICT` Conflict
+- Conflict `CONFLICTS_WITH` Claim
+
+Design notes:
+- Stable node IDs (`event:E001`, `claim:C001`, etc.)
+- Stable edge IDs (`edge_000001`, ...)
+- No duplicate nodes/edges
+- File-based graph output only (no Neo4j)
+
+---
+
+## 6) Validation Principles
 - IDs should be unique in their scope.
-- References must resolve (no dangling event/chunk references).
+- References must resolve (no dangling event/chunk/graph references).
 - Claims must be traceable to both event and chunk.
 - Each step output should be human-inspectable (JSONL artifacts + scripts/tests).
 
 ---
 
-## 6) Out of Scope for Now
+## 7) Out of Scope for Now
 - Real LLM API integration
 - Frontend
 - Database
 - Full GraphRAG runtime
+- Retrieval runtime
+- Final answer generation runtime
