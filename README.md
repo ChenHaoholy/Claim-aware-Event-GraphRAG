@@ -36,6 +36,15 @@
 - **Chunk**：证据来自哪里
 - **TempEvent / TempClaim**：按 chunk 抽取的临时中间结果
 
+
+## 项目文档约定
+为减少后续对话中的重复说明，仓库内维护三份长期文档：
+- `AGENTS.md`：给 Codex/代码代理的开发约束、测试要求、禁做事项。
+- `PROJECT_SPEC.md`：项目设计总览，包含 schema 定义与 pipeline steps。
+- `PROMPTS.md`：可复用的 LLM prompt 模板（抽取、事件共指、冲突判断、最终回答）。
+
+当 schema、流程、prompt 发生变更时，请同步更新这些文档。
+
 ## 安装依赖
 ```bash
 pip install -r requirements.txt
