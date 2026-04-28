@@ -1,5 +1,7 @@
+import pytest
 from claim_aware_event_graphrag.schemas import Claim, Conflict, Event
 from claim_aware_event_graphrag.validation import validate_conflicts
+from pydantic import ValidationError
 
 
 def _event(event_id: str = "E001") -> Event:
@@ -96,20 +98,10 @@ def test_conflict_claims_multiple_events_detected() -> None:
 
 
 def test_is_conflict_false_with_non_none_severity_detected() -> None:
-    events = [_event()]
-    claims = [_claim("C001"), _claim("C002")]
-    conflicts = [_conflict(is_conflict=False, severity="low")]
-
-    errors = validate_conflicts(events, claims, conflicts)
-
-    assert "Conflict CF001 has is_conflict=false but severity=low" in errors
+    with pytest.raises(ValidationError):
+        _conflict(is_conflict=False, severity="low")
 
 
 def test_is_conflict_true_with_none_severity_detected() -> None:
-    events = [_event()]
-    claims = [_claim("C001"), _claim("C002")]
-    conflicts = [_conflict(is_conflict=True, severity="none")]
-
-    errors = validate_conflicts(events, claims, conflicts)
-
-    assert "Conflict CF001 has is_conflict=true but severity=none" in errors
+    with pytest.raises(ValidationError):
+        _conflict(is_conflict=True, severity="none")
