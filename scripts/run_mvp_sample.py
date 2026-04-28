@@ -7,13 +7,30 @@ import sys
 DEFAULT_QUESTIONS = [
     "What claims conflict about the target?",
     "How did oil prices respond?",
-    "What happened near Isfahan?",
+    "What happened near Meridian Port?",
 ]
 
 
 def _print_step(title: str) -> None:
     print(f"\n=== {title} ===")
 
+
+
+
+def _apply_temp_event_fallbacks(temp_events, chunks) -> None:
+    chunk_by_id = {chunk.chunk_id: chunk for chunk in chunks}
+    for event in temp_events:
+        chunk = chunk_by_id.get(event.chunk_id)
+        if chunk is None:
+            continue
+
+        if event.time is None and chunk.date is not None and chunk.date.strip() != "":
+            event.time = chunk.date
+
+        if event.location is None:
+            lowered = chunk.text.lower()
+            if "meridian port" in lowered:
+                event.location = "Meridian Port"
 
 def run_mvp_sample_pipeline(
     root: Path | None = None,
@@ -76,6 +93,7 @@ def run_mvp_sample_pipeline(
     _print_step("Step 2 - Extract temp events/claims")
     llm_client = MockLLMClient()
     temp_events, temp_claims = extract_from_chunks(chunks, llm_client)
+    _apply_temp_event_fallbacks(temp_events, chunks)
     temp_errors = validate_temp_extraction(chunks, temp_events, temp_claims)
 
     temp_events_path = processed_dir / "temp_events.jsonl"

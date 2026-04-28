@@ -38,5 +38,12 @@ def test_run_mvp_sample_pipeline_end_to_end() -> None:
 
     answers = result["answers_markdown"]
     assert isinstance(answers, list)
-    assert len(answers) >= 1
+    assert len(answers) == 3
     assert all(isinstance(item, str) and item.strip() != "" for item in answers)
+
+    assert any("What happened near Meridian Port?" in answer for answer in answers)
+    assert any("Oil prices rose after the incident." in answer for answer in answers)
+
+    major_events = [event for event in events if event.type == "military"]
+    assert any(event.time is not None for event in major_events)
+    assert any(event.location == "Meridian Port" for event in major_events)
