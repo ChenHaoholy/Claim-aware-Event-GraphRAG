@@ -6,7 +6,7 @@ from typing import TypeVar
 
 from pydantic import ValidationError
 
-from .schemas import Chunk, Claim, Event, TempClaim, TempEvent
+from .schemas import Chunk, Claim, Conflict, Event, TempClaim, TempEvent
 
 
 class JsonlError(ValueError):
@@ -90,3 +90,8 @@ def load_temp_events(path: str | Path) -> list[TempEvent]:
 
 def load_temp_claims(path: str | Path) -> list[TempClaim]:
     return _load_models(path, TempClaim)
+
+
+
+def load_conflicts(path: str | Path) -> list[Conflict]:
+    return _load_models(path, Conflict)

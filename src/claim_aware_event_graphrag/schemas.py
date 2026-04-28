@@ -30,6 +30,7 @@ ClaimTopic = Literal[
 ]
 
 ClaimStance = Literal["assert", "deny", "uncertain", "report"]
+ConflictSeverity = Literal["low", "medium", "high", "none"]
 
 
 class Chunk(BaseModel):
@@ -168,4 +169,41 @@ class ExtractionResult(BaseModel):
                 raise ValueError(
                     f"TempClaim {claim.temp_claim_id} references missing temp_event_id {claim.temp_event_id}"
                 )
+        return self
+
+
+class Conflict(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    conflict_id: str
+    event_id: str
+    claim_ids: list[str]
+    topic: ClaimTopic
+    is_conflict: bool
+    severity: ConflictSeverity
+    explanation: str
+
+    @field_validator("conflict_id", "event_id", "explanation")
+    @classmethod
+    def must_be_non_empty(cls, value: str) -> str:
+        if value == "":
+            raise ValueError("must not be empty")
+        return value
+
+    @field_validator("claim_ids")
+    @classmethod
+    def claim_ids_must_have_multiple_items(cls, value: list[str]) -> list[str]:
+        if len(value) < 2:
+            raise ValueError("claim_ids must contain at least 2 claim ids")
+        for claim_id in value:
+            if claim_id.strip() == "":
+                raise ValueError("claim_ids must not contain empty claim_id")
+        return value
+
+    @model_validator(mode="after")
+    def severity_must_match_conflict_flag(self) -> "Conflict":
+        if not self.is_conflict and self.severity != "none":
+            raise ValueError("severity must be 'none' when is_conflict is false")
+        if self.is_conflict and self.severity == "none":
+            raise ValueError("severity must not be 'none' when is_conflict is true")
         return self

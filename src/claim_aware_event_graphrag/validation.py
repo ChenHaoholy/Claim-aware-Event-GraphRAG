@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from .schemas import Chunk, Claim, Event, TempClaim, TempEvent
+from .schemas import Chunk, Claim, Conflict, Event, TempClaim, TempEvent
 
 
 def validate_dataset(
@@ -104,5 +104,67 @@ def validate_temp_extraction(
             errors.append(f"TempClaim {claim.temp_claim_id} has empty text")
         if claim.claimant.strip() == "":
             errors.append(f"TempClaim {claim.temp_claim_id} has empty claimant")
+
+    return errors
+
+
+
+def validate_conflicts(
+    events: list[Event],
+    claims: list[Claim],
+    conflicts: list[Conflict],
+) -> list[str]:
+    errors: list[str] = []
+
+    event_ids = {event.event_id for event in events}
+    claim_by_id = {claim.claim_id: claim for claim in claims}
+
+    seen_conflict_ids: set[str] = set()
+    for conflict in conflicts:
+        if conflict.conflict_id in seen_conflict_ids:
+            errors.append(f"Duplicate conflict_id: {conflict.conflict_id}")
+        seen_conflict_ids.add(conflict.conflict_id)
+
+        if conflict.event_id not in event_ids:
+            errors.append(f"Conflict {conflict.conflict_id} references missing event_id {conflict.event_id}")
+
+        linked_claims: list[Claim] = []
+        for claim_id in conflict.claim_ids:
+            claim = claim_by_id.get(claim_id)
+            if claim is None:
+                errors.append(f"Conflict {conflict.conflict_id} references missing claim_id {claim_id}")
+            else:
+                linked_claims.append(claim)
+
+        if linked_claims:
+            linked_event_ids = {claim.event_id for claim in linked_claims}
+            if len(linked_event_ids) != 1:
+                errors.append(
+                    f"Conflict {conflict.conflict_id} has claim_ids that belong to multiple event_ids: {sorted(linked_event_ids)}"
+                )
+            elif conflict.event_id not in linked_event_ids:
+                errors.append(
+                    f"Conflict {conflict.conflict_id} event_id {conflict.event_id} does not match claim event_id {next(iter(linked_event_ids))}"
+                )
+
+            topic_counts: dict[str, int] = {}
+            for claim in linked_claims:
+                topic_counts[claim.topic] = topic_counts.get(claim.topic, 0) + 1
+            majority_topic = max(topic_counts.items(), key=lambda x: x[1])[0]
+            if conflict.topic != majority_topic:
+                errors.append(
+                    f"Conflict {conflict.conflict_id} topic {conflict.topic} does not match majority claim topic {majority_topic}"
+                )
+
+        if not conflict.is_conflict and conflict.severity != "none":
+            errors.append(
+                f"Conflict {conflict.conflict_id} has is_conflict=false but severity={conflict.severity}"
+            )
+        if conflict.is_conflict and conflict.severity == "none":
+            errors.append(
+                f"Conflict {conflict.conflict_id} has is_conflict=true but severity=none"
+            )
+        if conflict.explanation.strip() == "":
+            errors.append(f"Conflict {conflict.conflict_id} has empty explanation")
 
     return errors

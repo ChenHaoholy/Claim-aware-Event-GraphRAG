@@ -1,5 +1,11 @@
 """Claim-aware Event GraphRAG package."""
 
+from .conflict_detection import (
+    detect_conflicts,
+    detect_rule_based_conflict,
+    generate_conflict_candidates,
+    group_claims_by_event_and_topic,
+)
 from .event_merge import (
     canonicalize_claims,
     cluster_temp_events,
@@ -11,22 +17,25 @@ from .extraction import extract_from_chunk, extract_from_chunks
 from .schemas import (
     Chunk,
     Claim,
+    Conflict,
     Event,
     ExtractionResult,
     TempClaim,
     TempEvent,
 )
-from .validation import validate_dataset, validate_temp_extraction
+from .validation import validate_conflicts, validate_dataset, validate_temp_extraction
 
 __all__ = [
     "Chunk",
     "Event",
     "Claim",
+    "Conflict",
     "TempEvent",
     "TempClaim",
     "ExtractionResult",
     "validate_dataset",
     "validate_temp_extraction",
+    "validate_conflicts",
     "extract_from_chunk",
     "extract_from_chunks",
     "events_maybe_same",
@@ -34,4 +43,8 @@ __all__ = [
     "make_canonical_event",
     "canonicalize_claims",
     "merge_temp_extraction",
+    "group_claims_by_event_and_topic",
+    "generate_conflict_candidates",
+    "detect_rule_based_conflict",
+    "detect_conflicts",
 ]
