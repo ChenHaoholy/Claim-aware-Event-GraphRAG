@@ -1,21 +1,31 @@
 # PROJECT_SPEC.md
 
-## 1) Project overview
-Claim-aware Event GraphRAG is being built in incremental, verifiable steps.
-Current repository scope covers deterministic data modeling and processing from evidence chunks to:
-- extracted temporary events/claims,
-- canonical merged events/claims,
-- rule-based conflict detection results.
+## 1) Project Goal
+Claim-aware Event GraphRAG aims to build an event-centered QA system where:
+- **Event** captures what happened,
+- **Claim** captures who said what,
+- **Chunk** captures evidence source text.
 
-The system intentionally emphasizes inspectable intermediate JSONL artifacts.
+The design emphasizes stable intermediate outputs and verification at every step.
 
 ---
 
-## 2) Core schemas
+## 2) Pipeline Roadmap
+- **Step 1**: schema + sample data + validation
+- **Step 2**: chunk-level Event + Claim extraction
+- **Step 3**: temp event merge + claim canonicalization
+- **Step 4**: claim conflict detection
+- **Step 5**: graph construction
+- **Step 6**: retrieval
+- **Step 7**: answer generation
+
+Current repository work is centered on Steps 1–3 foundations.
+
+---
+
+## 3) Current Schemas
 
 ### Chunk
-Represents an evidence text segment.
-
 Fields:
 - `chunk_id: str`
 - `doc_id: str`
@@ -23,12 +33,10 @@ Fields:
 - `date: str | None`
 - `text: str`
 
-Key constraints:
-- `chunk_id`, `doc_id`, `text` non-empty.
+Purpose:
+- Atomic evidence unit from source text.
 
-### Event (canonical)
-Represents a normalized event after merge.
-
+### Event
 Fields:
 - `event_id: str`
 - `time: str | None`
@@ -37,13 +45,10 @@ Fields:
 - `actors: list[str]`
 - `location: str | None`
 
-Key constraints:
-- `event_id`, `summary` non-empty.
-- `actors` can be empty list, but cannot contain empty strings.
+Purpose:
+- Canonical event representation after merge.
 
-### Claim (canonical)
-Represents a statement about a canonical event.
-
+### Claim
 Fields:
 - `claim_id: str`
 - `event_id: str`
@@ -53,12 +58,10 @@ Fields:
 - `stance: Literal[assert, deny, uncertain, report]`
 - `source_chunk_id: str`
 
-Key constraints:
-- key string fields non-empty.
+Purpose:
+- Canonical statement linked to an Event and evidence chunk.
 
 ### TempEvent
-Per-chunk temporary event extraction output.
-
 Fields:
 - `temp_event_id: str`
 - `chunk_id: str`
@@ -68,13 +71,10 @@ Fields:
 - `actors: list[str]`
 - `location: str | None`
 
-Key constraints:
-- `temp_event_id`, `chunk_id`, `summary` non-empty.
-- `actors` cannot contain empty strings.
+Purpose:
+- Per-chunk extracted event candidate before merge.
 
 ### TempClaim
-Per-chunk temporary claim extraction output.
-
 Fields:
 - `temp_claim_id: str`
 - `temp_event_id: str`
@@ -85,119 +85,45 @@ Fields:
 - `stance: Claim.stance literal`
 - `source_chunk_id: str`
 
-Key constraints:
-- key string fields non-empty.
-- `source_chunk_id == chunk_id`.
+Purpose:
+- Per-chunk extracted claim candidate before canonicalization.
 
 ### ExtractionResult
-Container for one chunk extraction call.
-
 Fields:
 - `temp_events: list[TempEvent]`
 - `temp_claims: list[TempClaim]`
 
-Key constraints:
-- every `TempClaim.temp_event_id` must exist in `temp_events`.
-- empty lists are valid.
-
-### Conflict
-Conflict analysis result for one candidate claim group.
-
-Fields:
-- `conflict_id: str` (e.g., `CF001`)
-- `event_id: str`
-- `claim_ids: list[str]` (>=2)
-- `topic: Claim.topic literal`
-- `is_conflict: bool`
-- `severity: Literal[low, medium, high, none]`
-- `explanation: str`
-
-Key constraints:
-- `conflict_id`, `event_id`, `explanation` non-empty.
-- `claim_ids` must contain at least 2 IDs.
-- if `is_conflict == false` then `severity == "none"`.
-- if `is_conflict == true` then `severity != "none"`.
+Purpose:
+- Container for one chunk extraction output.
 
 ---
 
-## 3) Pipeline steps
+## 4) JSONL Files
 
-### Step 1 — Schema + sample + validation
-Inputs:
+### Sample data
 - `data/sample/chunks.jsonl`
 - `data/sample/events.jsonl`
 - `data/sample/claims.jsonl`
 
-Outputs/checks:
-- schema validation and dataset integrity checks (`validate_dataset`).
-
-### Step 2 — Chunk-level extraction
-Input:
-- sample chunks JSONL.
-
-Processing:
-- prompt build (`prompts.py`)
-- `LLMClient` call (default `MockLLMClient`)
-- normalize IDs and auto-fill chunk/source references
-
-Outputs:
+### Processed data
 - `data/processed/temp_events.jsonl`
 - `data/processed/temp_claims.jsonl`
-
-### Step 3 — Event merge + claim canonicalization
-Inputs:
-- temp events/claims.
-
-Processing:
-- rule-based event similarity + clustering
-- canonical event creation (`E001...`)
-- temp claim mapping to canonical claim (`C001...`)
-
-Outputs:
 - `data/processed/events.jsonl`
 - `data/processed/claims.jsonl`
 - `data/processed/temp_event_mapping.jsonl`
 
-### Step 4 — Claim conflict detection
-Inputs:
-- canonical events/claims.
+---
 
-Processing:
-- group claims by `(event_id, topic)`
-- keep groups with >=2 claims and >=2 distinct claimants
-- rule-based contradiction checks per topic
-
-Outputs:
-- `data/processed/conflicts.jsonl` (includes both true/false conflict decisions for debugging)
+## 5) Validation Principles
+- IDs should be unique in their scope.
+- References must resolve (no dangling event/chunk references).
+- Claims must be traceable to both event and chunk.
+- Each step output should be human-inspectable (JSONL artifacts + scripts/tests).
 
 ---
 
-## 4) Validation layers
-- JSONL parse validation (file path + line number errors).
-- Schema-level validation (Pydantic models).
-- Cross-record validation:
-  - `validate_dataset`
-  - `validate_temp_extraction`
-  - `validate_conflicts`
-
----
-
-## 5) Non-goals (current stage)
-- No GraphRAG runtime orchestration.
-- No retrieval system / vector index.
-- No final QA answer generation pipeline.
-- No frontend.
-- No real LLM API usage by default.
-- No DB persistence layer.
-
----
-
-## 6) Main commands
-```bash
-python scripts/validate_sample.py
-python scripts/extract_sample.py
-python scripts/merge_sample.py
-python scripts/validate_processed.py
-python scripts/detect_conflicts_sample.py
-pytest
-```
+## 6) Out of Scope for Now
+- Real LLM API integration
+- Frontend
+- Database
+- Full GraphRAG runtime

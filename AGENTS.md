@@ -1,62 +1,43 @@
 # AGENTS.md
 
-This file defines repository-level instructions for coding agents (Codex, etc.).
+## Project
+- This repository is **Claim-aware Event GraphRAG**.
+- Long-term goal: build an **Event → Claim → Evidence** graph-based QA system.
 
-## Scope
-- Applies to the entire repository.
+## Working principles for Codex
+- Make changes in **small, testable steps**.
+- Prefer explicit, readable, deterministic logic before adding complex components.
+- Keep schemas simple and stable.
+- Avoid over-engineering.
 
-## Project intent
-This repository is a staged, verifiable buildout of a **Claim-aware Event GraphRAG** pipeline.
-Current implemented focus is deterministic data processing with stable intermediate artifacts.
+## Current focus
+- Core objects at this stage:
+  - `Chunk`
+  - `Event`
+  - `Claim`
+  - `TempEvent`
+  - `TempClaim`
+- `Conflict`, `Graph`, and other advanced objects will be added in later stages.
 
-## Hard constraints
-- Keep architecture simple and inspectable.
-- Preserve JSONL-based intermediate outputs for each step.
-- Prefer deterministic/rule-based logic in early stages.
-- Keep components replaceable (especially LLM client interfaces).
+## Do NOT add unless explicitly requested
+- Real LLM API integration
+- Full GraphRAG orchestration
+- Frontend/UI
+- Database/storage layer
 
-## Must NOT do (unless explicitly requested)
-- Do **not** implement full GraphRAG orchestration.
-- Do **not** add retrieval/vector DB.
-- Do **not** add frontend/UI.
-- Do **not** connect real LLM APIs by default.
-- Do **not** add conflict-resolution intelligence beyond requested MVP rules.
-- Do **not** introduce a database layer.
-- Do **not** silently swallow parsing/validation errors.
+## Data/output conventions
+- Use JSONL for intermediate artifacts whenever possible.
+- Each pipeline step should provide:
+  - runnable script(s)
+  - test coverage
+  - human-readable outputs / inspectable files
 
-## Code and design rules
-- Python 3.10+ compatible.
-- Pydantic-based schemas are the source of truth for data contracts.
-- Keep modules focused:
-  - `schemas.py`: data contracts only
-  - `jsonl.py`: JSONL I/O + typed loaders
-  - `validation.py`: cross-record integrity checks
-  - `extraction.py`/`event_merge.py`/`conflict_detection.py`: stage logic
-- Prefer explicit, readable errors with context (path, line number, IDs).
-- Keep function behavior stable and testable.
-- Avoid over-engineering and unnecessary abstractions.
+## Validation & testing
+- Keep outputs traceable and verifiable.
+- After changes, run `pytest` when environment allows.
+- Do not silently swallow parsing or validation errors.
 
-## Testing expectations
-When changing code/docs, run the relevant checks if environment allows:
-1. `python scripts/validate_sample.py`
-2. `python scripts/extract_sample.py`
-3. `python scripts/merge_sample.py`
-4. `python scripts/validate_processed.py`
-5. `python scripts/detect_conflicts_sample.py`
-6. `pytest`
-
-If environment limitations block execution (e.g., missing dependencies/network), report clearly.
-
-## Output artifacts to preserve
-- `data/sample/*.jsonl`
-- `data/processed/temp_events.jsonl`
-- `data/processed/temp_claims.jsonl`
-- `data/processed/temp_event_mapping.jsonl`
-- `data/processed/events.jsonl`
-- `data/processed/claims.jsonl`
-- `data/processed/conflicts.jsonl`
-
-## Documentation discipline
-- Keep `PROJECT_SPEC.md` updated when schema/pipeline changes.
-- Keep `PROMPTS.md` updated when prompt contracts or output JSON formats change.
-- Keep README command sequence aligned with scripts.
+## Practical guardrails
+- Keep modifications minimal and scoped to the requested step.
+- Preserve backward compatibility unless explicitly asked to break it.
+- Update docs when pipeline or schema assumptions change.
