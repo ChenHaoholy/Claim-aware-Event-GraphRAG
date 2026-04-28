@@ -64,6 +64,19 @@ python scripts/answer_sample.py "How did oil prices respond?"
 python scripts/answer_sample.py "What happened near Isfahan?"
 ```
 
+
+## Run the full MVP sample pipeline
+```bash
+python scripts/run_mvp_sample.py
+```
+
+说明：
+- 该脚本会覆盖 `data/processed` 和 `data/graph` 下的 sample 输出。
+- 全流程只使用 MockLLM / rule-based modules。
+- 不调用真实 LLM。
+- 不需要 Neo4j。
+- 不需要向量数据库。
+
 ## 核心对象
 - **Event**：发生了什么（canonical）
 - **Claim**：谁如何描述这件事（canonical）

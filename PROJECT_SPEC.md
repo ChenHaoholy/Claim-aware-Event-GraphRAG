@@ -18,8 +18,9 @@ The design emphasizes stable intermediate outputs and verification at every step
 - **Step 5**: graph construction
 - **Step 6**: retrieval
 - **Step 7**: answer generation
+- **Step 8**: end-to-end MVP runner and verification
 
-Current repository work is centered on Steps 1–7 deterministic foundations.
+Current repository work is centered on Steps 1–8 deterministic foundations.
 
 ---
 
@@ -233,3 +234,40 @@ Current limitations:
 - Database
 - Neo4j / vector database runtime
 - Full GraphRAG orchestration
+
+
+## 10) End-to-End MVP Runner (Step 8)
+Inputs:
+- `data/sample/chunks.jsonl`
+- `data/sample/events.jsonl`
+- `data/sample/claims.jsonl`
+
+Runner script:
+- `python scripts/run_mvp_sample.py`
+
+Pipeline sequence:
+1. validate sample data
+2. extract temp events / temp claims
+3. merge temp events into canonical events / claims
+4. validate processed events / claims
+5. detect conflicts
+6. build graph
+7. run retrieval + answer generation for sample questions
+
+Outputs:
+- `data/processed/temp_events.jsonl`
+- `data/processed/temp_claims.jsonl`
+- `data/processed/events.jsonl`
+- `data/processed/claims.jsonl`
+- `data/processed/temp_event_mapping.jsonl`
+- `data/processed/conflicts.jsonl`
+- `data/graph/nodes.jsonl`
+- `data/graph/edges.jsonl`
+- terminal markdown answers for 3 sample questions
+
+Limitations:
+- no real LLM integration (MockLLM/rule-based only)
+- no frontend
+- no Neo4j integration
+- no vector database integration
+- no module refactor in this step
