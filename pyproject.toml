@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "claim-aware-event-graphrag"
+version = "0.1.0"
+description = "Step 1 foundations for claim-aware event GraphRAG"
+requires-python = ">=3.10"
+dependencies = [
+  "pydantic>=2,<3",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
