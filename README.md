@@ -77,6 +77,20 @@ python scripts/run_mvp_sample.py
 - 不需要 Neo4j。
 - 不需要向量数据库。
 
+
+## Step 9: Evaluation Runner
+运行方式：
+```bash
+python scripts/run_mvp_sample.py
+python scripts/run_eval_sample.py
+```
+
+说明：
+- 当前评估是 keyword-based lightweight evaluation。
+- 不使用真实 LLM judge。
+- 目标是检查 retrieval 和 answer generation 是否命中预期信息。
+- 后续可以扩展为人工评分或 LLM-as-judge。
+
 ## 核心对象
 - **Event**：发生了什么（canonical）
 - **Claim**：谁如何描述这件事（canonical）

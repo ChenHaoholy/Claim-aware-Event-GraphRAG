@@ -19,8 +19,9 @@ The design emphasizes stable intermediate outputs and verification at every step
 - **Step 6**: retrieval
 - **Step 7**: answer generation
 - **Step 8**: end-to-end MVP runner and verification
+- **Step 9**: evaluation runner
 
-Current repository work is centered on Steps 1–8 deterministic foundations.
+Current repository work is centered on Steps 1–9 deterministic foundations.
 
 ---
 
@@ -271,3 +272,35 @@ Limitations:
 - no Neo4j integration
 - no vector database integration
 - no module refactor in this step
+
+## 11) Evaluation Runner (Step 9)
+Eval questions schema (`data/eval/questions.jsonl`):
+- `question_id: str`
+- `question: str`
+- `category: str`
+- `expected_event_keywords: list[str]`
+- `expected_claim_keywords: list[str]`
+- `expected_conflict_keywords: list[str]`
+- `expected_answer_keywords: list[str]`
+
+Eval results schema (`data/eval/results.jsonl`):
+- `question_id: str`
+- `question: str`
+- `category: str`
+- `retrieval_counts: {events, claims, conflicts, chunks}`
+- `event_keyword_eval: {hit_count, total_count, hit_rate, matched_keywords, missed_keywords}`
+- `claim_keyword_eval: {hit_count, total_count, hit_rate, matched_keywords, missed_keywords}`
+- `conflict_keyword_eval: {hit_count, total_count, hit_rate, matched_keywords, missed_keywords}`
+- `answer_keyword_eval: {hit_count, total_count, hit_rate, matched_keywords, missed_keywords}`
+
+Metrics:
+- keyword hit rate per question for events/claims/conflicts/answer
+- overall average hit rates across all eval questions
+
+Limitations:
+- keyword matching only (no semantic understanding)
+- no real LLM judge
+- no frontend
+- no vector database integration
+- no pipeline refactor
+
