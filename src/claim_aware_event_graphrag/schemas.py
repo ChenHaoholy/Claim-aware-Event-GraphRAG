@@ -271,3 +271,23 @@ class RetrievalResult(BaseModel):
         if value == "":
             raise ValueError("question must not be empty")
         return value
+
+
+
+class AnswerResult(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    question: str
+    conclusion: str
+    key_events: list[dict[str, object]]
+    claims_by_actor: dict[str, list[dict[str, object]]]
+    conflicts_and_uncertainty: list[dict[str, object]]
+    evidence: list[dict[str, object]]
+    limitations: list[str]
+
+    @field_validator("question", "conclusion")
+    @classmethod
+    def must_be_non_empty(cls, value: str) -> str:
+        if value == "":
+            raise ValueError("must not be empty")
+        return value

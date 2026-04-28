@@ -19,7 +19,7 @@ The design emphasizes stable intermediate outputs and verification at every step
 - **Step 6**: retrieval
 - **Step 7**: answer generation
 
-Current repository work is centered on Steps 1–6 foundations.
+Current repository work is centered on Steps 1–7 deterministic foundations.
 
 ---
 
@@ -112,6 +112,16 @@ Fields:
 - `relevant_conflict_ids: list[str]`
 - `debug_info: dict[str, Any]`
 
+### AnswerResult
+Fields:
+- `question: str`
+- `conclusion: str`
+- `key_events: list[dict]`
+- `claims_by_actor: dict[str, list[dict]]`
+- `conflicts_and_uncertainty: list[dict]`
+- `evidence: list[dict]`
+- `limitations: list[str]`
+
 ---
 
 ## 4) JSONL Files
@@ -153,12 +163,6 @@ Edge creation:
 - Event `HAS_CONFLICT` Conflict
 - Conflict `CONFLICTS_WITH` Claim
 
-Design notes:
-- Stable node IDs (`event:E001`, `claim:C001`, etc.)
-- Stable edge IDs (`edge_000001`, ...)
-- No duplicate nodes/edges
-- File-based graph output only (no Neo4j)
-
 ---
 
 ## 6) Retrieval Rules (Step 6)
@@ -189,7 +193,33 @@ Current limitations:
 
 ---
 
-## 7) Validation Principles
+## 7) Answer Generation Rules (Step 7)
+Inputs:
+- retrieval context expanded from `RetrievalResult`
+
+Outputs:
+- `AnswerResult`
+- markdown answer text with sections:
+  - Conclusion
+  - Key Events
+  - Claims by Actor
+  - Conflicts and Uncertainty
+  - Evidence
+  - Limitations
+
+Rules:
+- deterministic template-based synthesis
+- use only retrieved context
+- do not fabricate missing facts
+- no real LLM usage in current step
+
+Current limitations:
+- no semantic rewriting beyond template formatting
+- quality depends on retrieval quality
+
+---
+
+## 8) Validation Principles
 - IDs should be unique in their scope.
 - References must resolve (no dangling event/chunk/graph references).
 - Claims must be traceable to both event and chunk.
@@ -197,9 +227,9 @@ Current limitations:
 
 ---
 
-## 8) Out of Scope for Now
+## 9) Out of Scope for Now
 - Real LLM API integration
 - Frontend
 - Database
-- Full GraphRAG runtime
-- Final answer generation runtime
+- Neo4j / vector database runtime
+- Full GraphRAG orchestration

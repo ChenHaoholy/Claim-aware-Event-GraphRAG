@@ -1,5 +1,6 @@
 """Claim-aware Event GraphRAG package."""
 
+from .answer_generation import format_answer_markdown, generate_answer_from_context
 from .conflict_detection import (
     detect_conflicts,
     detect_rule_based_conflict,
@@ -26,6 +27,7 @@ from .retrieval import (
     tokenize_query,
 )
 from .schemas import (
+    AnswerResult,
     Chunk,
     Claim,
     Conflict,
@@ -52,6 +54,7 @@ __all__ = [
     "GraphNode",
     "GraphEdge",
     "RetrievalResult",
+    "AnswerResult",
     "TempEvent",
     "TempClaim",
     "ExtractionResult",
@@ -79,4 +82,6 @@ __all__ = [
     "score_conflict",
     "retrieve_context",
     "format_retrieval_result",
+    "generate_answer_from_context",
+    "format_answer_markdown",
 ]

@@ -9,7 +9,8 @@
 - **Step 3**：Event Merge and Claim Canonicalization
 - **Step 4**：Claim Conflict Detection
 - **Step 5**：Graph Construction
-- **Step 6（当前新增）**：Rule-based Graph Retrieval
+- **Step 6**：Rule-based Graph Retrieval
+- **Step 7（当前新增）**：Answer Generation
 
 当前实现聚焦在可验证的中间层：
 - 数据 schema（Pydantic）
@@ -49,6 +50,18 @@
 python scripts/retrieve_sample.py "What claims conflict about the target?"
 python scripts/retrieve_sample.py "How did oil prices respond?"
 python scripts/retrieve_sample.py "What happened near Isfahan?"
+```
+
+## Step 7: Answer Generation
+- 基于 Step 6 retrieval context 进行结构化回答生成
+- 当前为 deterministic 模板化答案，不接入真实 LLM
+- 回答包含：Conclusion / Key Events / Claims by Actor / Conflicts and Uncertainty / Evidence / Limitations
+
+运行示例：
+```bash
+python scripts/answer_sample.py "What claims conflict about the target?"
+python scripts/answer_sample.py "How did oil prices respond?"
+python scripts/answer_sample.py "What happened near Isfahan?"
 ```
 
 ## 核心对象
