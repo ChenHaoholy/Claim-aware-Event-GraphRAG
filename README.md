@@ -64,6 +64,67 @@ python scripts/answer_sample.py "How did oil prices respond?"
 python scripts/answer_sample.py "What happened near Isfahan?"
 ```
 
+
+## Run the full MVP sample pipeline
+```bash
+# 1) 默认 mock（保持原行为）
+python scripts/run_mvp_sample.py
+
+# 2) 使用 DeepSeek 重新抽取后继续后续 pipeline
+python scripts/run_mvp_sample.py --llm deepseek
+
+# 3) 跳过抽取，复用已有 temp_events/temp_claims
+python scripts/run_mvp_sample.py --skip-extraction
+```
+
+说明：
+- 默认会重新抽取并覆盖 `data/processed/temp_events.jsonl` 与 `data/processed/temp_claims.jsonl`。
+- `--skip-extraction` 会直接复用现有 temp 文件，不重新抽取；若文件缺失会报错。
+- 该脚本会覆盖 `data/processed` 和 `data/graph` 下的 sample 输出。
+- 全流程默认使用 MockLLM / rule-based modules。
+- 不需要 Neo4j。
+- 不需要向量数据库。
+
+
+## Step 9: Evaluation Runner
+运行方式：
+```bash
+python scripts/run_mvp_sample.py
+python scripts/run_eval_sample.py
+```
+
+说明：
+- 当前评估是 keyword-based lightweight evaluation。
+- 不使用真实 LLM judge。
+- 目标是检查 retrieval 和 answer generation 是否命中预期信息。
+- 后续可以扩展为人工评分或 LLM-as-judge。
+
+
+## Step 10: Optional DeepSeek for Extraction
+默认仍使用 `MockLLMClient`。
+
+可选 DeepSeek（仅 extraction 阶段）：
+```bash
+export DEEPSEEK_API_KEY=your_key
+# optional
+export DEEPSEEK_BASE_URL=https://api.deepseek.com
+export DEEPSEEK_MODEL=deepseek-chat
+
+python scripts/extract_sample.py --llm deepseek
+python scripts/extract_from_file.py --chunks data/sample/chunks.jsonl --output-dir data/processed --llm deepseek
+```
+
+使用 mock（默认）：
+```bash
+python scripts/extract_sample.py --llm mock
+python scripts/extract_from_file.py --chunks data/sample/chunks.jsonl --output-dir data/processed --llm mock
+```
+
+说明：
+- DeepSeek 通过 OpenAI-compatible API 调用。
+- 未设置 `DEEPSEEK_API_KEY` 会报清晰错误。
+- retrieval / answer_generation / evaluation 不受影响。
+
 ## 核心对象
 - **Event**：发生了什么（canonical）
 - **Claim**：谁如何描述这件事（canonical）

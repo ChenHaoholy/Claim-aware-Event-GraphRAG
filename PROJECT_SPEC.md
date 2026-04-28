@@ -18,8 +18,11 @@ The design emphasizes stable intermediate outputs and verification at every step
 - **Step 5**: graph construction
 - **Step 6**: retrieval
 - **Step 7**: answer generation
+- **Step 8**: end-to-end MVP runner and verification
+- **Step 9**: evaluation runner
+- **Step 10**: optional DeepSeek integration for extraction
 
-Current repository work is centered on Steps 1–7 deterministic foundations.
+Current repository work is centered on Steps 1–10 deterministic foundations.
 
 ---
 
@@ -233,3 +236,101 @@ Current limitations:
 - Database
 - Neo4j / vector database runtime
 - Full GraphRAG orchestration
+
+
+## 10) End-to-End MVP Runner (Step 8)
+Inputs:
+- `data/sample/chunks.jsonl`
+- `data/sample/events.jsonl`
+- `data/sample/claims.jsonl`
+
+Runner script:
+- `python scripts/run_mvp_sample.py`
+
+Pipeline sequence:
+1. validate sample data
+2. extract temp events / temp claims
+3. merge temp events into canonical events / claims
+4. validate processed events / claims
+5. detect conflicts
+6. build graph
+7. run retrieval + answer generation for sample questions
+
+Outputs:
+- `data/processed/temp_events.jsonl`
+- `data/processed/temp_claims.jsonl`
+- `data/processed/events.jsonl`
+- `data/processed/claims.jsonl`
+- `data/processed/temp_event_mapping.jsonl`
+- `data/processed/conflicts.jsonl`
+- `data/graph/nodes.jsonl`
+- `data/graph/edges.jsonl`
+- terminal markdown answers for 3 sample questions
+
+Limitations:
+- no real LLM integration (MockLLM/rule-based only)
+- no frontend
+- no Neo4j integration
+- no vector database integration
+- no module refactor in this step
+
+## 11) Evaluation Runner (Step 9)
+Eval questions schema (`data/eval/questions.jsonl`):
+- `question_id: str`
+- `question: str`
+- `category: str`
+- `expected_event_keywords: list[str]`
+- `expected_claim_keywords: list[str]`
+- `expected_conflict_keywords: list[str]`
+- `expected_answer_keywords: list[str]`
+
+Eval results schema (`data/eval/results.jsonl`):
+- `question_id: str`
+- `question: str`
+- `category: str`
+- `retrieval_counts: {events, claims, conflicts, chunks}`
+- `event_keyword_eval: {hit_count, total_count, hit_rate, matched_keywords, missed_keywords}`
+- `claim_keyword_eval: {hit_count, total_count, hit_rate, matched_keywords, missed_keywords}`
+- `conflict_keyword_eval: {hit_count, total_count, hit_rate, matched_keywords, missed_keywords}`
+- `answer_keyword_eval: {hit_count, total_count, hit_rate, matched_keywords, missed_keywords}`
+
+Metrics:
+- keyword hit rate per question for events/claims/conflicts/answer
+- overall average hit rates across all eval questions
+
+Limitations:
+- keyword matching only (no semantic understanding)
+- no real LLM judge
+- no frontend
+- no vector database integration
+- no pipeline refactor
+
+## 12) Optional DeepSeek Integration (Step 10)
+Scope:
+- only for extraction stage (Step 2 path)
+- default remains `MockLLMClient`
+
+Provider selection:
+- `get_llm_client("mock")` -> `MockLLMClient`
+- `get_llm_client("deepseek")` -> `DeepSeekLLMClient`
+- provider is case-insensitive
+
+DeepSeek env vars:
+- `DEEPSEEK_API_KEY` (required)
+- `DEEPSEEK_BASE_URL` (optional, default `https://api.deepseek.com`)
+- `DEEPSEEK_MODEL` (optional, default `deepseek-chat`)
+
+Scripts:
+- `python scripts/extract_sample.py --llm mock|deepseek`
+- `python scripts/extract_from_file.py --chunks <path> --output-dir <dir> --llm mock|deepseek`
+
+JSON parsing tolerance in extraction:
+- plain JSON
+- fenced block with language tag: ```json ... ```
+- fenced block without language tag: ``` ... ```
+
+Limitations:
+- no real LLM by default
+- no zhupu integration
+- no retrieval/answer/evaluation redesign in this step
+
