@@ -16,6 +16,7 @@ from .event_merge import (
 )
 from .extraction import extract_from_chunk, extract_from_chunks
 from .graph_builder import build_graph
+from .llm import DeepSeekLLMClient, MockLLMClient, get_llm_client
 from .retrieval import (
     format_retrieval_result,
     normalize_query,
@@ -74,6 +75,9 @@ __all__ = [
     "detect_rule_based_conflict",
     "detect_conflicts",
     "build_graph",
+    "MockLLMClient",
+    "DeepSeekLLMClient",
+    "get_llm_client",
     "normalize_query",
     "tokenize_query",
     "score_event",

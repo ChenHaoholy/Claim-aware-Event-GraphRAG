@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 
 from pydantic import ValidationError
 
@@ -13,6 +14,27 @@ class ExtractionError(ValueError):
     """Raised when extraction output is invalid."""
 
 
+
+
+def _parse_json_payload(raw_output: str, chunk_id: str) -> dict:
+    candidate = raw_output.strip()
+
+    fenced_match = re.search(r"```(?:json)?\s*(.*?)\s*```", candidate, flags=re.IGNORECASE | re.DOTALL)
+    if fenced_match is not None:
+        candidate = fenced_match.group(1).strip()
+
+    try:
+        payload = json.loads(candidate)
+    except json.JSONDecodeError as exc:
+        raise ExtractionError(
+            f"Chunk {chunk_id}: LLM output is not valid JSON (line {exc.lineno}, col {exc.colno})"
+        ) from exc
+
+    if not isinstance(payload, dict):
+        raise ExtractionError(f"Chunk {chunk_id}: LLM output must be a JSON object")
+
+    return payload
+
 def _prefix_local_id(chunk_id: str, local_id: str) -> str:
     return local_id if local_id.startswith(f"{chunk_id}_") else f"{chunk_id}_{local_id}"
 
@@ -21,15 +43,7 @@ def extract_from_chunk(chunk: Chunk, llm_client: LLMClient) -> ExtractionResult:
     prompt = build_event_claim_extraction_prompt(chunk)
     raw_output = llm_client.complete(prompt)
 
-    try:
-        payload = json.loads(raw_output)
-    except json.JSONDecodeError as exc:
-        raise ExtractionError(
-            f"Chunk {chunk.chunk_id}: LLM output is not valid JSON (line {exc.lineno}, col {exc.colno})"
-        ) from exc
-
-    if not isinstance(payload, dict):
-        raise ExtractionError(f"Chunk {chunk.chunk_id}: LLM output must be a JSON object")
+    payload = _parse_json_payload(raw_output, chunk.chunk_id)
 
     raw_events = payload.get("temp_events", [])
     raw_claims = payload.get("temp_claims", [])

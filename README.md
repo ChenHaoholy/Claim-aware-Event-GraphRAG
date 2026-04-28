@@ -91,6 +91,32 @@ python scripts/run_eval_sample.py
 - 目标是检查 retrieval 和 answer generation 是否命中预期信息。
 - 后续可以扩展为人工评分或 LLM-as-judge。
 
+
+## Step 10: Optional DeepSeek for Extraction
+默认仍使用 `MockLLMClient`。
+
+可选 DeepSeek（仅 extraction 阶段）：
+```bash
+export DEEPSEEK_API_KEY=your_key
+# optional
+export DEEPSEEK_BASE_URL=https://api.deepseek.com
+export DEEPSEEK_MODEL=deepseek-chat
+
+python scripts/extract_sample.py --llm deepseek
+python scripts/extract_from_file.py --chunks data/sample/chunks.jsonl --output-dir data/processed --llm deepseek
+```
+
+使用 mock（默认）：
+```bash
+python scripts/extract_sample.py --llm mock
+python scripts/extract_from_file.py --chunks data/sample/chunks.jsonl --output-dir data/processed --llm mock
+```
+
+说明：
+- DeepSeek 通过 OpenAI-compatible API 调用。
+- 未设置 `DEEPSEEK_API_KEY` 会报清晰错误。
+- retrieval / answer_generation / evaluation 不受影响。
+
 ## 核心对象
 - **Event**：发生了什么（canonical）
 - **Claim**：谁如何描述这件事（canonical）

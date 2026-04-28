@@ -20,8 +20,9 @@ The design emphasizes stable intermediate outputs and verification at every step
 - **Step 7**: answer generation
 - **Step 8**: end-to-end MVP runner and verification
 - **Step 9**: evaluation runner
+- **Step 10**: optional DeepSeek integration for extraction
 
-Current repository work is centered on Steps 1–9 deterministic foundations.
+Current repository work is centered on Steps 1–10 deterministic foundations.
 
 ---
 
@@ -303,4 +304,33 @@ Limitations:
 - no frontend
 - no vector database integration
 - no pipeline refactor
+
+## 12) Optional DeepSeek Integration (Step 10)
+Scope:
+- only for extraction stage (Step 2 path)
+- default remains `MockLLMClient`
+
+Provider selection:
+- `get_llm_client("mock")` -> `MockLLMClient`
+- `get_llm_client("deepseek")` -> `DeepSeekLLMClient`
+- provider is case-insensitive
+
+DeepSeek env vars:
+- `DEEPSEEK_API_KEY` (required)
+- `DEEPSEEK_BASE_URL` (optional, default `https://api.deepseek.com`)
+- `DEEPSEEK_MODEL` (optional, default `deepseek-chat`)
+
+Scripts:
+- `python scripts/extract_sample.py --llm mock|deepseek`
+- `python scripts/extract_from_file.py --chunks <path> --output-dir <dir> --llm mock|deepseek`
+
+JSON parsing tolerance in extraction:
+- plain JSON
+- fenced block with language tag: ```json ... ```
+- fenced block without language tag: ``` ... ```
+
+Limitations:
+- no real LLM by default
+- no zhupu integration
+- no retrieval/answer/evaluation redesign in this step
 
