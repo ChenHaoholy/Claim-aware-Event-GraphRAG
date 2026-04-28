@@ -16,7 +16,9 @@ class MockLLMClient:
         chunk_text = self._extract_chunk_text(prompt)
         text = chunk_text.lower()
 
-        if "military facility" in text and "civilian infrastructure" in text:
+        if (("military facility" in text and "civilian infrastructure" in text)
+            or ("military logistics warehouse" in text and "civilian fuel depot" in text)
+            or ("military logistics warehouse" in text and "not civilian facilities" in text)):
             result = {
                 "temp_events": [
                     {
@@ -49,7 +51,7 @@ class MockLLMClient:
             }
             return json.dumps(result, ensure_ascii=False)
 
-        if "oil prices" in text:
+        if "oil prices" in text or "premium surcharges" in text or "insurers" in text:
             result = {
                 "temp_events": [
                     {
